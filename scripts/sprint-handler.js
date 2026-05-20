@@ -322,9 +322,37 @@ async function handlePhase(args, infra, deps) {
   }
   const sprint = await infra.stateStore.load(args.id);
   if (!sprint) return { ok: false, error: 'Sprint not found: ' + args.id };
-  const result = await lifecycle.advancePhase(sprint, args.to, Object.assign({
+  // v2.1.16 (Issue #95, F2): forward --approve / --reason to advancePhase Step 2.
+  // approve is single-use; the handler does NOT persist it into sprint.autoRun.scope.
+  const advanceDeps = Object.assign({
     eventEmitter: infra.eventEmitter.emit,
-  }, deps.lifecycleDeps || {}));
+    approve: args.approve === true || args.approve === 'true',
+    reason: typeof args.reason === 'string' ? args.reason : null,
+  }, deps.lifecycleDeps || {});
+  const result = await lifecycle.advancePhase(sprint, args.to, advanceDeps);
+  // v2.1.16 (Issue #95, F2): record scope_boundary_approved when the
+  // single-use --approve actually bypassed the Trust Level scope. Direct
+  // writeAuditLog call (audit-logger internally mirrors to OTEL since
+  // Sprint 4.5 — no double-write risk). Layer split preserved: the
+  // application use case stays pure; the handler (Presentation/Sprint 4)
+  // owns the cross-cutting audit emission.
+  if (result.ok && result.approvalRecord) {
+    try {
+      // Lazy require so Sprint 2 unit tests that import only the use case
+      // do not pull the audit-logger module graph.
+      const audit = require('../lib/audit/audit-logger');
+      audit.writeAuditLog({
+        actor: 'user',
+        action: 'scope_boundary_approved',
+        category: 'sprint',
+        target: result.approvalRecord.sprintId,
+        targetType: 'feature',
+        details: result.approvalRecord,
+        result: 'success',
+        reason: result.approvalRecord.reason || 'user-approved scope boundary',
+      });
+    } catch (_e) { /* audit best-effort */ }
+  }
   if (result.ok && result.sprint) await infra.stateStore.save(result.sprint);
   return result;
 }
@@ -540,7 +568,9 @@ function handleHelp() {
       '  start    /sprint start <id> [--trust L0-L4]',
       '  status   /sprint status <id>',
       '  list     /sprint list',
-      '  phase    /sprint phase <id> --to <phase>',
+      '  phase    /sprint phase <id> --to <phase> [--approve] [--reason "<text>"]',
+      '             --approve: single-use Trust Level scope-boundary escape hatch (v2.1.16 #95)',
+      '             --reason : optional rationale recorded under audit action scope_boundary_approved',
       '  iterate  /sprint iterate <id>',
       '  qa       /sprint qa <id> --feature <name>',
       '  report   /sprint report <id>',

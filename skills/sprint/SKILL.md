@@ -161,7 +161,7 @@ via `scripts/sprint-handler.js`.
 | `start` | `id`, `name` | `trust`/`trustLevel`, `phase`, `context`, `features` | `args = { id: "my-launch", name: "Q2 Launch" }` (resume preserves phase) |
 | `status` | `id` | — | `args = { id: "my-launch" }` |
 | `list` | — | — | `args = {}` |
-| `phase` | `id`, `to` | — | `args = { id: "my-launch", to: "qa" }` |
+| `phase` | `id`, `to` | `approve` (boolean), `reason` (string) | `args = { id: "my-launch", to: "do", approve: true, reason: "Design review complete" }` |
 | `iterate` | `id` | — | `args = { id: "my-launch" }` |
 | `qa` | `id`, `featureName` | — | `args = { id: "my-launch", featureName: "auth" }` |
 | `report` | `id` | — | `args = { id: "my-launch" }` |
@@ -173,6 +173,37 @@ via `scripts/sprint-handler.js`.
 | `fork` | `id`, `newId` | — | `args = { id: "my-launch", newId: "my-launch-v2" }` |
 | `help` | — | — | `args = {}` |
 | `master-plan` | `id` (projectId), `name` (projectName) | `features` (CSV or array), `trust`/`trustLevel`, `context`, `projectRoot`, `force` (boolean), `duration` | `args = { id: "q2-launch", name: "Q2 Launch", features: ["auth", "payment"] }` |
+
+### 10.1.1 `phase --approve` semantics (v2.1.16, Issue #95)
+
+When a sprint is at Trust Level L2 (`scope.stopAfter = "design"`) or any other
+level whose `scope.requireApproval` blocks a forward transition, the user can
+re-issue the `phase` action with `--approve` (and optional `--reason`) to
+cross the scope boundary **for this single call only**:
+
+```bash
+/sprint phase my-launch --to do --approve --reason "Design review complete, M4/M8 gates pass"
+```
+
+Semantics (Master Plan §11.2 AC1-AC6):
+
+- **Single-use**: `sprint.autoRun.scope` is NOT mutated. The next transition
+  faces the same scope check. To advance through multiple scope-blocking
+  transitions, re-issue `--approve` each time (or escalate Trust Level via
+  `/bkit:control level <N>`).
+- **No trust escalation**: `sprint.autoRun.trustLevelAtStart` and the global
+  automation level (`/bkit:control`) are unchanged. The approval is recorded
+  per-call.
+- **Audit-logged**: every `--approve` boundary crossing emits an
+  `audit-logger.writeAuditLog({ action: 'scope_boundary_approved', details: {
+  sprintId, from, to, trustLevel, stopAfter, approvedBy, reason } })` entry.
+  The `--reason "..."` value is the recorded rationale (null when omitted).
+- **Without `--approve` the legacy deadlock behavior is preserved**: handler
+  returns `{ ok: false, reason: 'requires_user_approval', stopAfter, hint }`.
+
+Use this when you want to advance past the scope boundary for one specific
+transition (e.g., L2 design → do after design review) without permanently
+relaxing the trust level.
 
 ### 10.2 Trust Level Acceptance
 

@@ -169,28 +169,36 @@ async function sc05() {
   }
 }
 
-// === SC-06: audit-logger ACTION_TYPES 18 entries ===
+// === SC-06: audit-logger ACTION_TYPES 28 entries (module-level assertion, not regex) ===
 function sc06() {
-  const src = fs.readFileSync(
-    path.join(projectRoot, 'lib/audit/audit-logger.js'),
-    'utf8'
-  );
-  // Match `const ACTION_TYPES = [ ... ]` (Sprint 4 baseline shape, no Object.freeze wrap)
-  const match = src.match(/const\s+ACTION_TYPES\s*=\s*\[([\s\S]*?)\];/);
-  assert(match, 'ACTION_TYPES array literal not found');
-  const entries = match[1].match(/'[^']+'/g) || [];
-  // v2.1.13 DEEP-4 fix: added 'task_created' (ENH-156 was emitting but enum
-  // missed registration). v2.1.14 Sub-Sprint 2 (Defense) added 7 entries
-  // (layer_6_audit_completed/alarm_triggered, heredoc_bypass_blocked,
-  // git_push_intercepted, post_tool_block_recorded, hook_reachability_lost,
-  // memory_directive_enforced). Total 20 → 27.
-  assert.strictEqual(entries.length, 27,
-    'ACTION_TYPES expected 27 entries, got ' + entries.length);
-  const flat = entries.join(',');
-  assert(flat.includes('sprint_paused'), 'sprint_paused missing from ACTION_TYPES');
-  assert(flat.includes('sprint_resumed'), 'sprint_resumed missing from ACTION_TYPES');
-  assert(flat.includes('master_plan_created'), 'master_plan_created missing from ACTION_TYPES (S2-UX v2.1.13)');
-  assert(flat.includes('task_created'), 'task_created missing from ACTION_TYPES (DEEP-4 v2.1.13)');
+  // v2.1.16 evolution: assert against the module's exported runtime array
+  // rather than a source-text regex. The source-text regex was fragile —
+  // it counted single-quoted string literals inside JSDoc comments (e.g.
+  // 'requires_user_approval' referenced in the scope_boundary_approved doc
+  // block), producing false-positive count drift.
+  //
+  // Module-level assertion: trust the actual exported value, then sanity-
+  // check that critical action types are present.
+  const al = require(path.join(projectRoot, 'lib/audit/audit-logger'));
+  // v2.1.13 DEEP-4: +task_created (20). v2.1.14 Sub-Sprint 2 (Defense):
+  //   +6 (layer_6_audit_completed/alarm_triggered, heredoc_bypass_blocked,
+  //   git_push_intercepted, post_tool_block_recorded, hook_reachability_lost) → 26.
+  // v2.1.14 Sub-Sprint 4 (E Defense): +memory_directive_enforced → 27.
+  // v2.1.16 (Issue #95 F2): +scope_boundary_approved → 28.
+  assert.strictEqual(al.ACTION_TYPES.length, 28,
+    'ACTION_TYPES expected 28 entries, got ' + al.ACTION_TYPES.length +
+    ' — entries: [' + al.ACTION_TYPES.join(', ') + ']');
+  const required = [
+    'sprint_paused',                // v2.1.13
+    'sprint_resumed',               // v2.1.13
+    'master_plan_created',          // v2.1.13 S2-UX
+    'task_created',                 // v2.1.13 DEEP-4
+    'memory_directive_enforced',    // v2.1.14 ENH-286
+    'scope_boundary_approved',      // v2.1.16 Issue #95 F2
+  ];
+  for (const a of required) {
+    assert(al.ACTION_TYPES.includes(a), a + ' missing from ACTION_TYPES');
+  }
 }
 
 // === SC-07: SPRINT_AUTORUN_SCOPE mirror (Sprint 2 inline ↔ Sprint 4 lib/control) ===
@@ -418,20 +426,156 @@ function sc11() {
   assert.strictEqual(rOk.current, 100);
 }
 
+// === SC-12: advance-phase --approve escape hatch contract (v2.1.16, Issue #95 F2) ===
+//
+// Behavioral contract for the single-use scope-boundary escape hatch:
+//   - Without --approve at scope boundary: { ok: false, reason: 'requires_user_approval', hint }
+//   - With --approve at scope boundary: { ok: true, approvalRecord: {...}, sprint.autoRun.scope unmutated }
+//   - With --approve when no boundary blocks: approvalRecord null (no needless audit)
+//   - With approve === false: legacy deadlock behavior preserved
+async function sc12() {
+  const adv = require(path.join(projectRoot, 'lib/application/sprint-lifecycle/advance-phase.usecase'));
+  const domain = require(path.join(projectRoot, 'lib/domain/sprint'));
+
+  // Build L2 sprint at design phase, all design gates passing.
+  const base = domain.createSprint({
+    id: 'sc12-test', name: 'SC12Test', trustLevelAtStart: 'L2', features: ['x'],
+  });
+  const sprint = domain.cloneSprint(base, {
+    phase: 'design',
+    autoRun: { ...base.autoRun, scope: { stopAfter: 'design', requireApproval: true } },
+    qualityGates: {
+      ...base.qualityGates,
+      M4_apiComplianceRate:  { current: 100, threshold: 95, passed: true },
+      M8_designCompleteness: { current: 100, threshold: 85, passed: true },
+    },
+    phaseHistory: [{ phase: 'design', enteredAt: new Date().toISOString(), exitedAt: null, durationMs: null }],
+  });
+
+  // 1) No --approve → requires_user_approval + hint
+  const r1 = await adv.advancePhase(sprint, 'do');
+  assert.strictEqual(r1.ok, false, 'no-approve scope crossing must return ok:false');
+  assert.strictEqual(r1.reason, 'requires_user_approval');
+  assert.strictEqual(r1.stopAfter, 'design');
+  assert.strictEqual(typeof r1.hint, 'string', 'requires_user_approval response must include a hint string');
+  assert(r1.hint.includes('--approve'), 'hint must mention --approve');
+
+  // 2) --approve true → advance + approvalRecord populated
+  const r2 = await adv.advancePhase(sprint, 'do', {
+    approve: true,
+    reason: 'SC-12 contract assertion',
+  });
+  assert.strictEqual(r2.ok, true);
+  assert.strictEqual(r2.sprint.phase, 'do');
+  assert(r2.approvalRecord, 'approvalRecord must be populated');
+  assert.deepStrictEqual(Object.keys(r2.approvalRecord).sort(),
+    ['approvedBy', 'from', 'reason', 'sprintId', 'stopAfter', 'to', 'trustLevel']);
+  assert.strictEqual(r2.approvalRecord.from, 'design');
+  assert.strictEqual(r2.approvalRecord.to, 'do');
+  assert.strictEqual(r2.approvalRecord.trustLevel, 'L2');
+  assert.strictEqual(r2.approvalRecord.approvedBy, 'user');
+  assert.strictEqual(r2.approvalRecord.reason, 'SC-12 contract assertion');
+
+  // 3) Single-use semantic — sprint.autoRun.scope NOT mutated.
+  assert.deepStrictEqual(r2.sprint.autoRun.scope, sprint.autoRun.scope,
+    'sprint.autoRun.scope must NOT be mutated by single-use approve');
+
+  // 4) approve === false → legacy deadlock behavior preserved.
+  const r4 = await adv.advancePhase(sprint, 'do', { approve: false });
+  assert.strictEqual(r4.ok, false);
+  assert.strictEqual(r4.reason, 'requires_user_approval');
+
+  // 5) --approve true but no boundary blocking (L4 scope) → approvalRecord null.
+  const sprintL4 = domain.cloneSprint(sprint, {
+    autoRun: { ...sprint.autoRun, scope: { stopAfter: 'archived', requireApproval: false } },
+  });
+  const r5 = await adv.advancePhase(sprintL4, 'do', { approve: true });
+  assert.strictEqual(r5.ok, true);
+  assert.strictEqual(r5.approvalRecord, null,
+    'approvalRecord must be null when --approve does not bypass any boundary');
+
+  // 6) audit-logger ACTION_TYPES includes scope_boundary_approved (cross-check with SC-06).
+  const al = require(path.join(projectRoot, 'lib/audit/audit-logger'));
+  assert(al.ACTION_TYPES.includes('scope_boundary_approved'),
+    'audit-logger.ACTION_TYPES must include scope_boundary_approved');
+
+  // 7) Handler forwards --approve to advancePhase and emits audit entry on success.
+  //    Validated end-to-end via temp project root. lib/core/platform caches
+  //    PROJECT_DIR at first import — clear the require cache for platform +
+  //    audit-logger + sprint-handler so they re-read cwd after chdir.
+  const tmp = fs.mkdtempSync(path.join(os.tmpdir(), 'sc12-'));
+  const prevCwd = process.cwd();
+  const modulesToReset = [
+    path.join(projectRoot, 'lib/core/platform'),
+    path.join(projectRoot, 'lib/core/index'),
+    path.join(projectRoot, 'lib/audit/audit-logger'),
+    path.join(projectRoot, 'lib/infra/sprint/sprint-paths'),
+    path.join(projectRoot, 'lib/infra/sprint/sprint-state-store.adapter'),
+    path.join(projectRoot, 'lib/infra/sprint/sprint-telemetry.adapter'),
+    path.join(projectRoot, 'lib/infra/sprint/sprint-doc-scanner.adapter'),
+    path.join(projectRoot, 'lib/infra/sprint/matrix-sync.adapter'),
+    path.join(projectRoot, 'lib/infra/sprint/index'),
+    path.join(projectRoot, 'lib/infra/sprint'),
+    path.join(projectRoot, 'scripts/sprint-handler'),
+  ];
+  function resetModules() {
+    for (const m of modulesToReset) {
+      try {
+        const resolved = require.resolve(m);
+        delete require.cache[resolved];
+      } catch (_e) { /* not loaded yet */ }
+    }
+  }
+  try {
+    process.chdir(tmp);
+    fs.mkdirSync(path.join(tmp, '.bkit', 'state', 'sprints'), { recursive: true });
+    fs.mkdirSync(path.join(tmp, '.bkit', 'audit'), { recursive: true });
+    fs.writeFileSync(path.join(tmp, '.bkit', 'state', 'sprints', 'sc12-handler.json'),
+      JSON.stringify(domain.cloneSprint(sprint, { id: 'sc12-handler' }), null, 2));
+    resetModules();
+    const handler = require(path.join(projectRoot, 'scripts/sprint-handler'));
+    const hr = await handler.handleSprintAction('phase', {
+      id: 'sc12-handler', to: 'do', approve: true, reason: 'SC-12 handler integration',
+    });
+    assert.strictEqual(hr.ok, true);
+    assert.strictEqual(hr.sprint.phase, 'do');
+    assert(hr.approvalRecord, 'handler must surface approvalRecord');
+    // Verify audit log file got the entry.
+    const today = new Date().toISOString().slice(0, 10);
+    const auditFile = path.join(tmp, '.bkit', 'audit', today + '.jsonl');
+    assert(fs.existsSync(auditFile), 'audit log file must exist at ' + auditFile);
+    const lines = fs.readFileSync(auditFile, 'utf8').split('\n').filter(Boolean).map(JSON.parse);
+    const approved = lines.find((e) => e.action === 'scope_boundary_approved');
+    assert(approved, 'audit log file must contain scope_boundary_approved entry — found actions: ' +
+      lines.map((l) => l.action).join(', '));
+    assert.strictEqual(approved.category, 'sprint');
+    assert.strictEqual(approved.actor, 'user');
+    assert.strictEqual(approved.target, 'sc12-handler');
+    assert.strictEqual(approved.details.from, 'design');
+    assert.strictEqual(approved.details.to, 'do');
+    assert.strictEqual(approved.details.reason, 'SC-12 handler integration');
+  } finally {
+    process.chdir(prevCwd);
+    resetModules(); // restore canonical modules for downstream tests
+    try { fs.rmSync(tmp, { recursive: true, force: true }); } catch (_e) { /* ignore */ }
+  }
+}
+
 // === Runner ===
 (async () => {
-  console.log('=== L3 Contract Tests (Sprint 5 SC-01~08 + S4-UX SC-09~10 + v2.1.16 SC-11) ===\n');
+  console.log('=== L3 Contract Tests (Sprint 5 SC-01~08 + S4-UX SC-09~10 + v2.1.16 SC-11~12) ===\n');
   record('SC-01 Sprint entity shape (12 core keys)', sc01);
   record('SC-02 deps interface (start: 7 + iterate: 2 + verify: 1)', sc02);
   record('SC-03 createSprintInfra 4 adapters + Sprint 5 3 scaffolds', sc03);
   record('SC-04 handleSprintAction(action,args,deps) + 16 VALID_ACTIONS', sc04);
   await record('SC-05 4-layer end-to-end chain (init → status → list)', sc05);
-  record('SC-06 ACTION_TYPES enum 20 entries (incl sprint_paused/resumed/master_plan_created/task_created)', sc06);
+  record('SC-06 ACTION_TYPES enum 28 entries (incl sprint_paused/resumed/master_plan_created/task_created/scope_boundary_approved)', sc06);
   record('SC-07 SPRINT_AUTORUN_SCOPE inline ↔ lib/control mirror (5 levels)', sc07);
   record('SC-08 hooks.json 21 events 24 blocks invariant', sc08);
   await record('SC-09 master-plan 4-layer chain (handler → state + markdown + audit)', sc09);
   record('SC-10 context-sizer pure function contract (5 assertions)', sc10);
   record('SC-11 Sprint 2 quality-gates logic invariant (v2.1.16 evolution, Issue #92)', sc11);
+  await record('SC-12 advance-phase --approve escape hatch contract (v2.1.16 Issue #95 F2, 7 assertions + handler E2E)', sc12);
   console.log('\n=== L3 Contract: ' + passed + '/' + (passed + failed) + ' PASS ===');
   if (failed > 0) {
     console.error('\n❌ ' + failed + ' contract(s) FAILED — cross-sprint drift detected.');
