@@ -92,6 +92,16 @@ function walk(dir) {
 
 function scanProductionRequires() {
   const refs = new Set();
+  // Pattern 1 (original): direct string-literal require — `require('./foo')` / `require("../lib/x.js")`
+  const reDirect = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
+  // Pattern 2 (v2.1.19-hotfix.1): require wrapping path.join / require.resolve / path.resolve —
+  // captures any '...lib/...js' or '...lib/...' string literal inside the require call.
+  // Constrained to paths containing 'lib/' or starting with './'../' to limit false-positives.
+  // Examples covered:
+  //   require(path.join(ROOT, 'lib/quality/sqm-calculator.js'))
+  //   require(path.resolve(__dirname, '../lib/foo.js'))
+  //   require(require.resolve('./bar'))
+  const reIndirect = /require\s*\(\s*[a-zA-Z_$][\w.$]*\s*\([^)]*['"]((?:\.{1,2}\/|[^'"]*\blib\/)[^'"]+)['"][^)]*\)\s*\)/g;
   for (const r of PROD_ROOTS) {
     const root = path.join(PROJECT_ROOT, r);
     if (!fs.existsSync(root)) continue;
@@ -102,10 +112,12 @@ function scanProductionRequires() {
       } catch {
         continue;
       }
-      const re = /require\s*\(\s*['"]([^'"]+)['"]\s*\)/g;
       let m;
-      while ((m = re.exec(src)) !== null) {
+      while ((m = reDirect.exec(src)) !== null) {
         if (m[1].startsWith('.') || m[1].startsWith('/')) refs.add(m[1]);
+      }
+      while ((m = reIndirect.exec(src)) !== null) {
+        refs.add(m[1]);
       }
     }
   }

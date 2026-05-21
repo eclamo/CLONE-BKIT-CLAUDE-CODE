@@ -8,7 +8,7 @@
     },
     "dashboard": {
       "enabled": true,
-      "sections": ["progress", "workflow", "impact", "agent", "control"]
+      "sections": ["progress", "workflow", "impact", "agent", "control", "sqm"]
     },
     "contextInjection": {
       "enabled": true,

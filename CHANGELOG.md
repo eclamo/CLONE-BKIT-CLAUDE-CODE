@@ -5,6 +5,27 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [2.1.19-hotfix.1] - 2026-05-21 (branch: `feature/v2119-hotfix-1-deadcode`)
+
+> **Status**: CI hotfix — `Invocation Contract Check` workflow turned red immediately after v2.1.19 GA merge. The dead-code detector flagged 5 new v2.1.19 modules.
+> **Scope**: 4 files (+51 / -4). No feature behavior change — restores CI green, patches detector blind spot, closes one design/runtime wiring gap, and opts the new SQM dashboard section in via `bkit.config.json`.
+> **Root cause** (two independent issues coincided):
+> 1. `scripts/check-deadcode.js` require regex matched only direct string-literal forms (`require('./foo')`). The new v2.1.19 scripts use `require(path.join(ROOT, '...'))` (S0 measure, S3 docs-sync, S4 feedback refresh), so the detector treated their callees as orphaned.
+> 2. `lib/ui/sqm-panel.js` was specified by S5 design (ADR S5-003) to render in the SessionStart dashboard, but the wiring in `hooks/session-start.js` was never landed — a design/runtime gap. `bkit.config.json` `ui.dashboard.sections` also needed `'sqm'` for the new panel to opt in.
+
+### Fixed
+
+- **`scripts/check-deadcode.js`**: split `scanProductionRequires()` into two regexes. `reDirect` keeps the original behavior; `reIndirect` matches `require(<wrapper>(..., '<lib path>', ...))` where `<wrapper>` is any identifier (path.join, path.resolve, require.resolve, etc.) and the captured string literal contains `lib/` or starts with `./`/`../`. This restricts the new pattern to library-shaped references and avoids overmatching arbitrary strings. As a result `external-feedback-tracker`, `markdown-parse`, and `sqm-calculator` are correctly classified as live.
+- **`hooks/session-start.js`**: wired `lib/ui/sqm-panel` + `lib/quality/sqm-history` into the SessionStart dashboard. Added `'sqm'` to the default `_uiDashboardSections`. The render block is independent of the `primaryFeature` gate (SQM reflects project-wide quality maturity, not a single feature) and is fail-silent when `.bkit/state/sqm-history.jsonl` is missing. Closes the S5 design/runtime gap and makes `sqm-panel` + `sqm-history` live.
+- **`bkit.config.json`**: added `'sqm'` to `ui.dashboard.sections`. Without this, the runtime config (which takes precedence over the hook default) was a 5-section allowlist that excluded `'sqm'`, so the SqmPanel rendered to 0 chars even after wiring.
+
+### Verification
+
+- **`scripts/check-deadcode.js`**: NEW dead **5 → 0**, Live **134 → 139** (exactly the 5 intended modules — set-diff verified against the precise v2.1.19 GA baseline, NEW DEAD 0).
+- **Contract suite spot-check** (9 steps) all PASS: domain-purity (18 files) · guards (21 entries) · test-tracking (314 files, 0 untracked) · docs-code-sync (5/5 synced) · integration-runtime (23/23) · l2-smoke (101/101) · bkit-full-system (36/0/0) · contract-test-run vs v2.1.16 L1,L4 (255 assertions).
+- **Full QA aggregate** (4,168 TC, 157 test files): 12 FAIL + 6 errors reproduced identically against the HEAD~1 (v2.1.19 GA) baseline → confirmed pre-existing carryover (`ACTION_TYPES` baseline drift, trust-engine score change). **Hotfix introduced 0 new regressions.**
+- **SessionStart hook live run** (`CLAUDE_SESSION_ID=fresh node hooks/session-start.js`): JSON contract valid, all 5 dashboard sections including SQM (`64.00 / 100`) render correctly; `additionalContext` 5,482 → 5,741 chars (+259, SQM panel).
+
 ## [2.1.19] - 2026-05-21 (branch: `feature/v2119-quality-maturation`)
 
 > **Status**: Quality Maturation Sprint — pruge 가 v2.1.16~v2.1.18 cycle 에서 1.5일 / 10 issues 의 정밀한 결함 cluster (sprint domain) 를 보고. 단일 reactive fix loop 가 아닌 **5 sub-sprint master plan** 으로 sprint domain maturity 를 PDCA core 수준으로 격상. **모든 5 sub-sprint archived** + outer master sprint completion.
