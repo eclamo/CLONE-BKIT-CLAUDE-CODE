@@ -334,7 +334,12 @@ v2119 outer (이 master plan)
 | Sprint Report KPI Consistency (qualityGates vs kpi divergence count) | 0.15 | generateReport validator | unknown — never measured | ≤0 |
 | Sub-Agent Dispatch Success Rate (sprint-* agents 의 Task dispatch 성공 비율) | 0.10 | sprint-orchestrator audit | unknown — never measured | ≥0.95 |
 | Convention Contract Test Pass Rate | 0.05 | `test/contract/baseline/skills-convention.json` | (test 없음) | ≥0.99 |
-| **SQM Total** | 1.00 | weighted sum × 100 | ~58 (baseline 추정) | **≥85** |
+| **SQM Total** | 1.00 | weighted sum × 100 | **59.75 (실측 v2.1.18 baseline — S0 measurement 2026-05-21, CTO M-3 응답)** | **≥85** (decision tree §13 46-69 zone → 유지) |
+
+> **S0 measurement findings** (`docs/03-analysis/v2118-sqm-baseline.analysis.md`):
+> - docsCodeSyncRate 실측 93 (master plan estimate 98) — **3 skills drift** (sprint #107 + phase-3-mockup + phase-9-deployment, S2 F2-1 scope 3배 확장)
+> - externalDogfooderFeedbackResponseRate 실측 **100** (closed-only metric, master plan estimate 70) — S4 F4-3 Hall of Fame narrative 강력 evidence
+> - sprintReportKpiConsistency 실측 79 (master plan estimate null) — 14 reports 중 12 divergence, S3 F3-3 정확한 정량 evidence
 
 SQM ≥ 85 가 v2.1.19 의 6번째 success criterion (§1 SUCCESS).
 
