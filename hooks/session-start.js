@@ -92,7 +92,7 @@ const dashboardSections = [];
 // When ui.dashboard.enabled=false, skip rendering all 5 boxes
 // (progress / workflow / impact / agent / control).
 let _uiDashboardEnabled = true;
-let _uiDashboardSections = ['progress', 'workflow', 'impact', 'agent', 'control'];
+let _uiDashboardSections = ['progress', 'workflow', 'impact', 'agent', 'control', 'sqm'];
 try {
   const { getUIConfig } = require('../lib/core/config');
   const _ui = getUIConfig();
@@ -235,6 +235,25 @@ if (pdcaStatus && pdcaStatus.primaryFeature && _uiDashboardEnabled) {
     if (controlPanel) dashboardSections.push(controlPanel);
   } catch (e) {
     debugLog('SessionStart', 'v2.0.0 control panel rendering failed', { error: e.message });
+  }
+}
+
+// 9. v2.1.19 S5 F5-2: SQM (Sprint Quality Maturity) panel
+// Rendered independently of primaryFeature gate — SQM reflects project-wide
+// quality maturity, not a single feature lifecycle. Fail-silent: when no
+// baseline measurement exists (.bkit/state/sqm-history.jsonl missing), the
+// panel renderer returns an empty string and is skipped.
+if (_uiDashboardEnabled && _uiDashboardSections.includes('sqm')) {
+  try {
+    const sqmHistory = require('../lib/quality/sqm-history');
+    const { renderSqmPanel } = require('../lib/ui/sqm-panel');
+    const baseline = sqmHistory.latest();
+    if (baseline) {
+      const sqmPanel = renderSqmPanel({ baseline });
+      if (sqmPanel) dashboardSections.push(sqmPanel);
+    }
+  } catch (e) {
+    debugLog('SessionStart', 'v2.1.19 SQM panel rendering failed', { error: e.message });
   }
 }
 
