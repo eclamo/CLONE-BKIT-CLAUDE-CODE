@@ -353,11 +353,53 @@ async function handleInit(args, infra) {
       });
     } catch (_) { /* audit log failures must NOT block init */ }
   }
+  // v2.1.19 S3 F3-2 (closes #104): context auto-import fallback chain.
+  //   args.context (explicit) > master-plan.md > PRD.md > defaultContext()
+  // The chain only activates when caller omits args.context (or supplies
+  // empty context) — explicit override still wins.
+  let resolvedContext = args.context;
+  let contextSource = 'explicit';
+  let contextFilePath = null;
+  const ctxHasContent = args.context && Object.values(args.context).some(v => typeof v === 'string' && v.trim().length > 0);
+  if (!ctxHasContent) {
+    try {
+      const ctxImporter = require('../lib/application/sprint-lifecycle/context-importer');
+      const resolution = await ctxImporter.resolveContext(args.id, { projectRoot: process.cwd() });
+      resolvedContext = resolution.context;
+      contextSource = resolution.source;
+      contextFilePath = resolution.filePath;
+      // Audit emit on successful import (skip 'default' — no surprise to user)
+      if (resolution.source !== 'default') {
+        try {
+          require('../lib/audit/audit-logger').writeAuditLog({
+            actor: 'system',
+            actorId: process.env.CLAUDE_AGENT_ID || 'sprint-init-cli',
+            action: 'sprint_context_imported',
+            category: 'sprint',
+            target: args.id,
+            targetType: 'feature',
+            details: {
+              sprintId: args.id,
+              source: resolution.source,
+              filePath: resolution.filePath,
+              populatedFields: Object.keys(resolution.context).filter(k => resolution.context[k] && resolution.context[k].length > 0),
+            },
+            result: 'success',
+            destructiveOperation: false,
+          });
+        } catch (_) { /* audit failure non-blocking */ }
+      }
+    } catch (_) {
+      // context-importer failure → fall back to defaultContext
+      resolvedContext = undefined;
+    }
+  }
+
   const sprint = domain.createSprint({
     id: args.id,
     name: args.name,
     phase: args.phase || 'prd',
-    context: { ...defaultContext(), ...(args.context || {}) },
+    context: { ...defaultContext(), ...(resolvedContext || {}) },
     features: Array.isArray(args.features) ? args.features : [],
     trustLevelAtStart: normalizeTrustLevel(args),
   });
@@ -365,7 +407,7 @@ async function handleInit(args, infra) {
   infra.eventEmitter.emit(domain.SprintEvents.SprintCreated({
     sprintId: sprint.id, name: sprint.name, phase: sprint.phase,
   }));
-  return { ok: true, sprint, sprintId: sprint.id };
+  return { ok: true, sprint, sprintId: sprint.id, contextSource, contextFilePath };
 }
 
 async function handleStart(args, infra, deps) {

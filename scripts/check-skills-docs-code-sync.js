@@ -42,33 +42,12 @@ function parseArgs(argv) {
   return out;
 }
 
-/**
- * Strip fenced code blocks (``` ... ```) from markdown content. Returns the
- * cleaned content with code blocks replaced by blank lines (preserves line
- * numbers for downstream parsing).
- */
-function stripCodeBlocks(content) {
-  const lines = content.split('\n');
-  const out = [];
-  let inFence = false;
-  for (const line of lines) {
-    if (/^```/.test(line.trim())) {
-      inFence = !inFence;
-      out.push(''); // preserve line count
-      continue;
-    }
-    out.push(inFence ? '' : line);
-  }
-  return out.join('\n');
-}
-
-/**
- * Extract frontmatter region from SKILL.md content.
- */
-function extractFrontmatter(content) {
-  const m = content.match(/^---\n([\s\S]+?)\n---/);
-  return m ? m[1] : null;
-}
+// v2.1.19 S3 CO-S2-1: extracted markdown utilities to lib/util/markdown-parse.js
+// for reuse (context-importer also consumes). Re-export here as a thin alias
+// to preserve backward compat for code that imports from this module.
+const MD_PARSE = require(path.join(ROOT, 'lib/util/markdown-parse.js'));
+const stripCodeBlocks = MD_PARSE.stripCodeBlocks;
+const extractFrontmatter = MD_PARSE.extractFrontmatter;
 
 /**
  * Find all `scripts/<x>.js` references in non-code-block text.
