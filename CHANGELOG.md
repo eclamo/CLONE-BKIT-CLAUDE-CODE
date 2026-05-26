@@ -83,20 +83,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ADR 0011**: Status Accepted, 6 sections complete, cross-links to ADR 0003 + 0006 + 0010 + sprint docs verified.
 - **Hall of Fame (F14)**: `docs/external-dogfooders/bj.md` 5-stage Lifecycle progress documented, _README.md DA-4 status N=2 confirmed.
 
-### Open Questions (5건 — sprint 종결 시점)
+### Open Questions (5건 — sprint 종결 시점 + 2026-05-26 CO-4 patch amend)
 
 - **Q1** Anthropic docs vs 구현 lenient/strict 모순 — 외부 책임 (bkit 해결 불가)
 - **Q2** 정병진 CC 버전 미확정 — F3 회신 대기 (Out-of-scope)
-- **Q3** v2.1.143 정확한 release date — cc-version-researcher 재조회 (F4 amend 시점)
+- **Q3** ✅ **partially resolved 2026-05-26 CO-4 patch**: Anthropic CHANGELOG dateless 영구 미공개 (raw GitHub fetch 검증) + Releasebot 2026-05-15 detection proxy. cc-compatibility.guide.md § 2.2/2.2.1 + ADR 0011 § History/Q3 + sprint planning docs 4종 amend.
 - **Q4** marketplace.json `requirements.claudeCode` spec — description-text 안전 대체 (현 sprint 진행)
 - **Q5** v2.1.142 이하 사용자 비율 — post-release 모니터 (v2.1.21+ 분석)
 
-### Roll-forward markers (v2.1.21+)
+### Roll-forward markers (v2.1.21+) — 2026-05-26 CO-5 patch amend
 
 - F6 contract-check.yml `continue-on-error` → `false` (1주 advisory only 종료)
 - F8 R3-321 telemetry 3-month 분석 → 격하/유지 결정
 - F10 ENH-323 SessionStart detection telemetry 3-month 분석 → 격하/유지 결정
-- F14 Hall of Fame @bj Stage 3 (Fix Released) ⏳ → ✅ on v2.1.20 GA tag
+- F14 Hall of Fame @bj Stage 3 (Fix Released): **branch ✅ 2026-05-26 CO-5 patch**, GA tag 시점 "main + tag" upgrade ⏳
+- F14 Hall of Fame @bj Stage 5 (Public Acknowledge): **5-channel documented ✅ 2026-05-26 CO-5 patch** (bj.md / _README.md / README.md Hall of Fame v2.1.20 section / CHANGELOG attribution / ADR 0011 SC8), GA publish 시 외부 가시성 ↑
 
 ## [2.1.19-hotfix.1] - 2026-05-21 (branch: `feature/v2119-hotfix-1-deadcode`)
 

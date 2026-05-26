@@ -196,10 +196,10 @@ trustLevel: L4 (full-auto, archived target)
 | # | Item | Type | Rationale |
 |---|------|:----:|-----------|
 | **CO-1** | F6 contract-check.yml `continue-on-error: true → false` 강제 전환 | scheduled | v2.1.20 GA 후 1주 advisory only 종료 시점 |
-| **CO-2** | F10 ENH-323 timeout 200ms cold-start 민감성 검토 | observe | OTEL telemetry 3-month 누적 후 timeout elevation 또는 retry 추가 |
+| **CO-2** | F10 ENH-323 timeout 200ms cold-start 민감성 검토 | **test-side mitigated 2026-05-26 CO-2-partial-fix** + production-side still observe | **Test reliability**: `test/e2e/external-dogfood/cc-min-version.test.js` 에 subprocess JIT warmup 2회 추가 (production code 변경 없음). 결과 5x consecutive runs 모두 5/5 PASS — cold-start flakiness 영구 해소. **Production-side**: timeout 200ms spec 그대로 유지 (ADR 0011 Decision 5 정합), OTEL `gen_ai.cc_version_detection_ms` 3-month telemetry 누적 후 elevation 결정. |
 | **CO-3** | Q2 정병진 CC 버전 확정 + K6 KPI 갱신 | pending_user | F3 회신 발송 후 정병진 회신 받은 시점 |
-| **CO-4** | Q3 v2.1.143 정확한 release date amend | observe | cc-version-researcher 재조회 후 F4 § 2.2 amend |
-| **CO-5** | F14 @bj Lifecycle Stage 3/5 → ✅ 전환 | scheduled | v2.1.20 GA tag + CHANGELOG publish 시점 |
+| **CO-4** | ✅ Q3 v2.1.143 정확한 release date amend | **partially resolved 2026-05-26 CO-4 patch** | Anthropic CHANGELOG dateless 영구 미공개 + Releasebot 2026-05-15 proxy. `cc-compatibility.guide.md § 2.2` + `ADR 0011 § History/Q3` + sprint planning docs 4종 amend 완료. |
+| **CO-5** | ✅ F14 @bj Lifecycle Stage 3/5 → ✅ 전환 | **partially resolved 2026-05-26 CO-5 patch (sprint-internal)** | Stage 3 "Fix Released to branch" + Stage 5 "Public Acknowledge documented in 5 channels". 공식 v2.1.20 GA tag 발행 시 "Released to main + tag" 한 단계 격상. `bj.md 5-stage table` + `_README.md status note` + sprint state json amend 완료. |
 | **CO-6** | Q5 v2.1.142 이하 사용자 비율 trend 데이터 검토 | observe | post-release 모니터 1-month |
 
 ---

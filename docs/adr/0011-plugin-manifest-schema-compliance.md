@@ -160,6 +160,8 @@ cc-version-researcher 88% 신뢰도 결론 출처: `docs/03-analysis/cc-v2146-v2
 
 ADR 0003 Phase 1.5 (3-source 가설 검증) 적용 결과: cc-version-researcher 자체가 raw CHANGELOG + 공식 docs + bkit 실측을 통합 분석한 산출이며, 본 ADR 의 Decision 은 그 결과에 직접 의존한다.
 
+**CO-4 patch 2026-05-26 추가 검증**: Phase 1.5 3-source 재적용 (raw GitHub CHANGELOG fetch + Releasebot + npm registry meta) 결과 v2.1.143 plugin 시스템 메이저 release 임이 부수적으로 확인 (plugin dependency enforcement + /plugin marketplace browse pane projected context cost). 이는 cc-version-researcher 88% 신뢰도 결론 (displayName 정식 schema 격상)을 보강한다. Q3 status: partially resolved — Anthropic CHANGELOG 정책상 정확한 일자 영구 미공개, external detection proxy 2026-05-15.
+
 ---
 
 ## History (append-only)
@@ -172,8 +174,10 @@ ADR 0003 Phase 1.5 (3-source 가설 검증) 적용 결과: cc-version-researcher
 | 2026-05-26 | 정병진 (@bj) install 실패 incident 보고 (외부 dogfooder #2 trigger) | `docs/05-research/external-dogfooders/jbjeong-2026-05-26-displayName-reject.md` |
 | 2026-05-26 | cc-version-researcher 88% 신뢰도 결론 산출 | `docs/03-analysis/cc-v2146-v2150-strict-manifest-validation.analysis.md` |
 | 2026-05-26 | **ADR 0011 채택** (본 문서) | 본 frontmatter Status: Accepted |
+| 2026-05-26 | **CO-4 patch — Q3 partially resolved**: v2.1.143 external detection proxy = 2026-05-15 (Releasebot). Anthropic dateless CHANGELOG 정책 영구 명시. plugin 시스템 메이저 release 부수적 확인 (plugin dependency enforcement + /plugin marketplace browse pane projected context cost) | `docs/06-guide/cc-compatibility.guide.md` § 2.2 + § 2.2.1 |
+| 2026-05-26 | **CO-5 patch — @bj Lifecycle Stage 3 (Fix Released to branch, GA tag pending) + Stage 5 (Documented in CHANGELOG + Hall of Fame + README v2.1.20 section) 마크 ✅** | `docs/external-dogfooders/bj.md` 5-stage table + `_README.md` |
 | (TBD) | F3 회신 (정병진 CC `--version` 확인, Q2 해소) | F3 audit_logger record |
-| (TBD) | v2.1.20 GA — Decision 1-5 모두 GA | CHANGELOG `[2.1.20]` |
+| (TBD) | v2.1.20 GA tag — Decision 1-5 모두 GA + @bj Stage 3 "Fix Released" → 공식 release confirmed | CHANGELOG `[2.1.20]` + git tag `v2.1.20` |
 | (TBD) | v2.1.21+ F6 `continue-on-error: false` 강제 전환 | CHANGELOG `[2.1.21]` |
 | (TBD) | 3-month F8 R3-321 + F10 ENH-323 telemetry 분석 | v2.1.21+ 분석 |
 | (Future) | Anthropic 정책 변경 시 ADR 0011 § Decision amend | TBD |
@@ -187,6 +191,16 @@ ADR 0003 Phase 1.5 (3-source 가설 검증) 적용 결과: cc-version-researcher
 Anthropic 의 plugin manifest schema docs 와 실제 strict path 구현의 lenient/strict 처리가 일관되지 않다 (예: 일부 docs 는 unknown key 를 lenient 로 처리한다고 명시하나, v2.1.45+ 구현은 strict reject). **bkit 은 본 모순의 자체 해결을 시도하지 않는다 — Anthropic 책임 영역**.
 
 본 ADR 의 정책은 현 시점 strict path 기준을 보수적으로 채택한다. Anthropic 정책 변경 release 시 cc-regression reconcile cycle 이 변화를 자동 감지 → 본 § History 에 amend marker 를 append.
+
+### Q3 — v2.1.143 정확한 release date (partially resolved 2026-05-26)
+
+Anthropic CHANGELOG 는 **dateless format** 으로 release entry 를 발행 (raw GitHub fetch 검증). 따라서 정확한 release date 는 Anthropic 정책상 **영구 미공개**.
+
+External detection proxy (가장 신뢰할 수 있는 추정):
+- **2026-05-15** — Releasebot first detection
+- 2026-05-16 — WebSearch detection
+
+본 ADR § History append-only 정책에 따라 cc-compatibility.guide.md § 2.2 및 본 § Empirical Validation 항목에서 위 사실을 명시하며, "정확한 일자" 는 Q3 가 영구적으로 partial resolve 상태임을 정직히 기록한다.
 
 ---
 

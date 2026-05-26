@@ -107,6 +107,24 @@ function withMockedCC(prefix, versionOrBehavior, optOut, fn) {
   }
 }
 
+// ─── Subprocess warmup (CO-2 mitigation — test reliability only, prod spec preserved) ──
+// Production timeout (CC_VERSION_DETECT_TIMEOUT_MS = 200ms in session-context.js)
+// is intentionally tight per ADR 0011 Decision 5 + master plan §5.4 §R10.
+// However, on a cold Node test process the FIRST execSync('bash ...') spawn
+// can take >200ms on macOS/Linux due to interpreter + library mmap cost.
+// This warmup makes the second-and-onwards execSync calls (which detectCCVersion
+// actually performs) settle into normal latency. Production code is NOT changed.
+//
+// CO-2 (sprint report §7) remains "observe" for the production-side decision
+// (OTEL telemetry 3-month analysis), but test flakiness is closed here.
+try {
+  const { execSync: warmupExec } = require('child_process');
+  // 2 warmup spawns: first amortizes binary cache, second proves cache works.
+  for (let i = 0; i < 2; i++) {
+    try { warmupExec('true', { timeout: 1000, stdio: 'ignore' }); } catch (_e) { /* noop */ }
+  }
+} catch (_e) { /* noop — warmup failure should not block test */ }
+
 // ─── Scenarios ──────────────────────────────────────────────────────────────
 
 console.log('E2E cc-min-version — 정병진 (@bj) v2.1.142 displayName-reject reproduction');

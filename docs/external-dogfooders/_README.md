@@ -69,6 +69,10 @@ becomes a permanent regression test in bkit's E2E suite.
   Second entry — drove the entire `v2120-marketplace-recovery` sprint
   (14 features / 3 sub-sprints / ENH-321 + ENH-322 + ENH-323 / ADR 0011).
   Reproduction absorbed at `test/e2e/external-dogfood/cc-min-version.test.js`.
+  **5-stage Lifecycle status (CO-5 patch 2026-05-26)**: Stage 1/2/4 ✅
+  (Issue Filed / Repro Absorbed / Regression Lock), Stage 3 ✅ (Fix Released
+  to branch `release/v2.1.20-marketplace-recovery`, GA tag pending),
+  Stage 5 ✅ (Public Acknowledge — 5 channels documented).
 
 ## Acquisition Goal (DA-4)
 

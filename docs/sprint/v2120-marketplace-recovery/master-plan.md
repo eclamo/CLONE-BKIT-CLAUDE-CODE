@@ -663,7 +663,7 @@ D12
 |---|---------|---------|---------|---------|
 | **Q1** | docs vs 구현 lenient/strict 모순 — Anthropic 책임 영역 자체 해결? | (a) bkit Out-of-scope 명시 / (b) Anthropic gh issue 제출 / (c) 자체 회피 layer 도입 | **(a) bkit Out-of-scope** (Anthropic 책임) — ADR 0011 § Open Question 명시 | PRD § 6 명시 |
 | **Q2** | 정병진 CC 버전 미확정 — 회신 받은 후 v2.1.142 초과인 것으로 확인되면? | (a) sprint scope 보강 / (b) 별도 incident 추적 / (c) Out-of-scope (Q2 미해결 명시) | **(c) Out-of-scope** + 회신 받은 후 재검토 | F3 회신 받은 후 결정 |
-| **Q3** | v2.1.143 release date (정확 일자) | (a) cc-version-researcher agent 재조회 / (b) Anthropic CHANGELOG 직접 인용 / (c) 미상으로 처리 | **(b) CHANGELOG 직접 인용** (cc-version-researcher Phase 1.5 적용) | F4 cc-compatibility.guide.md 작성 시 |
+| **Q3** | v2.1.143 release date (정확 일자) | (a) cc-version-researcher agent 재조회 / (b) Anthropic CHANGELOG 직접 인용 / (c) 미상으로 처리 | **(b) + (c) hybrid** — 2026-05-26 CO-4 patch: Anthropic CHANGELOG dateless 영구 미공개 확정 + Releasebot detection 2026-05-15 proxy (partially resolved) | F4 cc-compatibility.guide.md § 2.2 amend 완료 (2026-05-26 CO-4) |
 | **Q4** | `marketplace.json` minimum CC version spec 존재 여부 | (a) marketplace.schema.json 직접 조회 / (b) `requirements.claudeCode` 키 후보 시도 / (c) 미가능 시 F2 보류 | **(a) schema 조회 우선** + (c) fallback | F2 Do 단계 진입 시 |
 | **Q5** | v2.1.142 이하 CC 사용자 비율 — 사용자 진입장벽 영향 (R6) | (a) Anthropic stable telemetry 미상 / (b) bkit OTEL telemetry.js 추적 / (c) 추정으로 처리 | **(c) 추정 (95% 이미 upgrade)** + post-release feedback 모니터 | sprint 종결 후 1-month |
 
@@ -673,7 +673,7 @@ D12
 |---|---------|---------|---------|
 | Q1 | (TBD) | kay | - |
 | Q2 | (TBD) | kay | - |
-| Q3 | (TBD) | cc-version-researcher | - |
+| Q3 | 2026-05-26 (CO-4 patch) | cc-version-researcher + ADR 0003 Phase 1.5 재적용 | Anthropic dateless 정책 영구 명시 + Releasebot 2026-05-15 proxy (partially resolved) |
 | Q4 | (TBD) | kay | - |
 | Q5 | (TBD) | kay (post-release) | - |
 
@@ -794,7 +794,7 @@ D12
 
 - ⚠️ **Q1** docs vs 구현 모순 (Anthropic 책임 영역, bkit이 해결 불가)
 - ⚠️ **Q2** 정병진 CC 버전 미확정 (회신 대기) → Sprint Out-of-scope 명시 + 회신 후 재검토
-- ⚠️ **Q3** v2.1.143 release date (정확 일자) → F4 작성 시 cc-version-researcher 재조회
+- ✅ **Q3** partially resolved (2026-05-26 CO-4 patch): Anthropic CHANGELOG dateless 영구 미공개 + Releasebot 2026-05-15 proxy
 - ⚠️ **Q4** marketplace.json `requirements.claudeCode` spec 존재 여부 → F2 Do 단계 진입 시 schema 직접 조회
 - ⚠️ **Q5** v2.1.142 이하 사용자 비율 → 추정 95% upgrade + post-release feedback 모니터
 

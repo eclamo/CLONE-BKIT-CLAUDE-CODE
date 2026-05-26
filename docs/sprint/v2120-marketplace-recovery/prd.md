@@ -518,7 +518,7 @@ Layer 3: Forward-proofing (P2)
 
 - ⚠️ **Q1** docs vs 구현 lenient/strict 모순 (Anthropic 책임 영역, bkit이 해결 불가)
 - ⚠️ **Q2** 정병진 CC 버전 미확정 (회신 대기) → Out-of-scope 명시 + 회신 후 재검토
-- ⚠️ **Q3** v2.1.143 release date (정확 일자) → F4 cc-compatibility.guide.md 작성 시 cc-version-researcher 재조회
+- ✅ **Q3** partially resolved (2026-05-26 CO-4 patch): Anthropic CHANGELOG dateless 영구 미공개 + Releasebot detection 2026-05-15 proxy. cc-compatibility.guide.md § 2.2 amend 완료.
 - ⚠️ **Q4** marketplace.json `requirements.claudeCode` spec 존재 여부 → F2 Do 단계 진입 시 schema 직접 조회
 - ⚠️ **Q5** v2.1.142 이하 사용자 비율 → 추정 95% upgrade + post-release feedback 모니터
 

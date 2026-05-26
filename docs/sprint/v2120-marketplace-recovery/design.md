@@ -1206,7 +1206,7 @@ testCCv143NoAdvisory();
 
 - ⚠️ **Q1** docs vs 구현 lenient/strict 모순 (Anthropic 책임, bkit 해결 불가)
 - ⚠️ **Q2** 정병진 CC 버전 미확정 (F3 회신 대기)
-- ⚠️ **Q3** v2.1.143 release date (F4 작성 시 cc-version-researcher 재조회)
+- ✅ **Q3** partially resolved (2026-05-26 CO-4 patch): Anthropic dateless CHANGELOG + Releasebot 2026-05-15 proxy
 - ⚠️ **Q4** marketplace.json `requirements.claudeCode` spec (F2 Do 진입 시 schema 조회)
 - ⚠️ **Q5** v2.1.142 이하 사용자 비율 (post-release 모니터)
 - ⚠️ **D1** F9 SoT module export 명명 충돌 (mitigation: 명명 패턴 답습)

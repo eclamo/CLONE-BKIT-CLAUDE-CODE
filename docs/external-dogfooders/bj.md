@@ -1,7 +1,7 @@
 # @bj (정병진) — External Dogfooder #2
 
 > **Joined**: 2026-05-26 (Issue Filed, Lifecycle Stage 1)
-> **Status**: Lifecycle Stage 5 (Public Acknowledge) — v2.1.20 GA target
+> **Status**: Lifecycle Stage 5 (Public Acknowledge) achieved 2026-05-26 (sprint-internal) — official GA tag pending
 > **Project**: TBD (F3 회신 확인 후 추가)
 > **Original incident**: bkit v2.1.14 install failure — `Validation errors: : Unrecognized key: "displayName"` (CC ≤ v2.1.142 strict-rejects the v2.1.143+ official displayName field)
 > **Driven sprint**: `v2120-marketplace-recovery` (14 features / 3 sub-sprints / 3 신규 ENH / 1 신규 ADR)
@@ -14,9 +14,14 @@
 |-------|:------:|------|----------|
 | 1. Issue Filed | ✅ | 2026-05-26 | `docs/05-research/external-dogfooders/jbjeong-2026-05-26-displayName-reject.md` (raw incident archive) |
 | 2. Repro Test Absorbed | ✅ | 2026-05-26 | `test/e2e/external-dogfood/cc-min-version.test.js` (5 TC: v2.1.142 / v2.1.143 / command-not-found / timeout / opt-out) |
-| 3. Fix Released | ⏳ | TBD v2.1.20 GA | `CHANGELOG.md [2.1.20]` + F1 (README + README-FULL advisory) + F4 (cc-compatibility.guide.md) |
+| 3. Fix Released | ✅ (to branch) | 2026-05-26 (sprint-internal); GA tag ⏳ | `release/v2.1.20-marketplace-recovery` 5 commits (`fb3e1bf` SS1 + `11ec408` SS2 + `5260e89` SS3 + `c098ca4` docs-sync + `1dec0d5` archive). 공식 v2.1.20 GA tag publish 시점에 "released to main + tag" upgrade. |
 | 4. Regression Lock | ✅ | 2026-05-26 | F8 R3-321 cc-regression guard (ENH-321) + F12 CS-015 21-key 보강 + F13 E2E v2.1.142 simulation |
-| 5. Public Acknowledge | ⏳ | TBD v2.1.20 GA | 본 entry + `docs/external-dogfooders/_README.md` 명단 갱신 (#2) + README "Real User Hall of Fame" |
+| 5. Public Acknowledge | ✅ (sprint-internal) | 2026-05-26 | 본 entry + `_README.md` 명단 갱신 (#2) + README "🌟 Real User Hall of Fame" v2.1.20 section + CHANGELOG `[2.1.20]` "External Dogfooder Contributions" + ADR 0011 § Empirical Validation SC8 |
+
+### 5.1 Stage 3 + Stage 5 정확화 (2026-05-26 CO-5 patch)
+
+- **Stage 3 (Fix Released)**: bkit v2.1.20 fix가 `release/v2.1.20-marketplace-recovery` branch에 committed + pushed 됨 → "Fix Released to branch" ✅. 공식 `v2.1.20` git tag publish 후 "Fix Released to main + tag" 으로 한 단계 더 격상 예정.
+- **Stage 5 (Public Acknowledge)**: 5개 채널 (Hall of Fame entry / `_README.md` 명단 / README Hall of Fame section / CHANGELOG attribution / ADR 0011 Empirical Validation SC8) 모두 documented → sprint-internal ✅. 공식 GA publish 시 외부 가시성 ↑.
 
 ---
 

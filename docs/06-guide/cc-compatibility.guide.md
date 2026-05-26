@@ -52,9 +52,32 @@ claude plugin validate .
 | bkit `.claude-plugin/plugin.json` 9 keys 중 `displayName` 위치 | line 4 | `.claude-plugin/plugin.json` 직접 실측 |
 | bkit-starter `.claude-plugin/plugin.json` `displayName` | 미포함 | 영향 0 확정 (별도 plugin) |
 
-### 2.2 v2.1.143 release date (Q3 미해결)
+### 2.2 v2.1.143 release date (Q3 partially resolved 2026-05-26)
 
-> ⚠️ **Q3 미해결**: v2.1.143 의 정확한 release date 는 cc-version-researcher 재조회가 필요합니다. 본 문서는 docs.claude.com 의 "Requires Claude Code v2.1.143 or later" 명시만 인용하며, 정확한 일자는 추후 amend 합니다.
+> ⚠️ **Q3 partially resolved** (2026-05-26 CO-4 patch). ADR 0003 Phase 1.5 Empirical Validation 3-source 교차 검증 결과:
+>
+> | Source | Evidence | 신뢰도 |
+> |--------|----------|--------|
+> | Anthropic raw CHANGELOG (`github.com/anthropics/claude-code/blob/main/CHANGELOG.md`) | `## 2.1.143` heading **without date** — Anthropic publishes CHANGELOG entries dateless | **High** |
+> | Releasebot detection (`releasebot.io/updates/anthropic/claude-code`) | First seen 2026-05-15 | High |
+> | WebSearch / community detection | Detected 2026-05-16 | Medium |
+> | npm registry dist-tags (`registry.npmjs.org/@anthropic-ai/claude-code`) | stable=2.1.142, latest=2.1.150 — 2.1.143 between (publish time not in metadata excerpt) | High (existence), Medium (date) |
+>
+> **결론**:
+> - Anthropic 측 정확한 release date **영구 미공개** (Anthropic CHANGELOG 정책: dateless).
+> - 가장 신뢰할 수 있는 proxy: **2026-05-15** (Releasebot first detection — 보통 npm publish 후 수 시간 내 detect).
+> - Q3 는 "Anthropic 정책상 미공개 + external proxy 2026-05-15" 로 **partially resolved**.
+
+#### 2.2.1 v2.1.143 plugin 시스템 메이저 release 부수적 확인
+
+Anthropic CHANGELOG raw fetch 결과, v2.1.143 본 release 는 plugin 시스템 메이저 변경 cluster:
+
+- "Added plugin dependency enforcement: `claude plugin disable` now refuses when another enabled plugin depends on the target"
+- "Added projected context cost (per-turn and per-invocation token estimates) to the `/plugin` marketplace browse pane"
+- "Added `worktree.bgIsolation: \"none\"` setting"
+- 기타 PowerShell / background sessions / Shift+Tab / 다수 fix
+
+→ `displayName` 정식 schema 채택은 본 CHANGELOG 에 명시되지 않지만, plugin 시스템 메이저 release 의 일부로 schema 격상이 함께 진행되었을 가능성이 cc-version-researcher 88% 신뢰도 결론과 정합 (docs.claude.com schema 페이지에 "Requires Claude Code v2.1.143 or later" 명시 = bkit 측 1차 근거 보강).
 
 ### 2.3 `displayName` 제거 시 회귀 (Anti-Mission)
 
