@@ -55,6 +55,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ENH-341 (removal manifest)**: **총 안전 제거 0건** + 후보별 live 근거(safety justification) 문서화(design §2).
 - **검증**: L4 deprecation governance PASS(v2.1.9+v2.1.16 exit 0), check-deadcode Dead=0, `Active(34)+Deprecated(6)===agents(34)+6` 불변식 true, 회귀 **0**(전후 `comm`, 7 pre-existing 동일). 코드 변경은 거버넌스 주석 1건뿐(M4=100).
 
+### S3a — Context-Eng Simplification: God-File Split (ENH-343~348)
+
+> 입력 근거: 마스터 플랜 §8 simplicity invariant + §10 S3a. 산출물: `docs/01-plan|02-design|04-report/features/ctx-eng-godfile-split.*`. **god-file(>700 LOC) 4개 → 0개**. 모두 behavior-preserving 추출(verbatim 이동 + re-export, 로직 불변), 1개씩 commit 체크포인트(반파 금지), 매 분할 contract L1+L4 + check-deadcode + 전 회귀 통과.
+
+- **ENH-346** `scripts/unified-stop.js` 751→**693**: lazy-dep getter 10개 → `scripts/lib/unified-stop-deps.js`(경로 ../lib→../../lib rebase). (commit 2c49218)
+- **ENH-345** `lib/pdca/automation.js` 770→**451**: AskUserQuestion/user-prompt 빌더 3(emitUserPrompt/formatAskUserQuestion/buildNextActionQuestion) → `lib/pdca/automation-questions.js`(pure, 외부 소비자 re-export로 무영향). (commit e43bb0f)
+- **ENH-344** `lib/pdca/state-machine.js` 985→**406**: STATES/EVENTS/TRANSITIONS(25)/GUARDS/ACTIONS + _checkChromeMcpAvailable → `lib/pdca/state-transitions.js`(자기완결 데이터, getCore/getStatus/getPhase 복제). (commit 43d47a2)
+- **ENH-343** `scripts/sprint-handler.js` 1509→**271**: 최고위험(sprint dispatcher). 4-모듈 분해 — helpers→`scripts/lib/sprint-handler-shared.js`(361), 14 lifecycle handlers→`sprint-handlers-core.js`(514), 6 admin handlers→`sprint-handlers-admin.js`(541). 핸들러 상호 무호출(검증) → 단방향 의존(shared←handlers←dispatcher), 순환 없음. 공개 exports `{handleSprintAction, VALID_ACTIONS, getInfra}` 불변. inline lazy require 14곳 rebase. (commit cec28c4)
+- **ENH-347**: audit-logger(689)/gap-detector-stop(602)/trust-engine(577) <700 → god-file 아님, monitor only(분할 안 함).
+- **ENH-348 simplicity invariant 최종 검증**: god-file **0**, 최대 파일 **541**(≤700), lib subdir **22**(무증가), lib module **190**(+2, ≤+10), contract assertion **255/234**(불변), 전 gate green.
+- **검증**: dispatcher 실동작(help/list/status/measure/trust idempotent-noop), sprint-handler 전용 test 6/6 + state-machine 4/4 PASS, contract L1+L4 255/234 PASS(전 분할), check-deadcode Dead=0, verify-full-system module 190/190·hook 73/73·agent 40/40·hooks.json 25/25, 회귀 **0**(4분할 각 baseline 7 동일).
+
 ## [2.1.21] - 2026-05-29 (branch: `release/v2.1.21-issue-response`)
 
 > **Status**: Issue Response Sprint — 2건의 외부 dogfooder open issue를 단일 통합 sprint(`v2121-issue-response`, Trust L4)으로 해소. **#111** (sessionTitle 충돌, reporter @wonuseo 외부 dogfooder #3) + **#113** (Sprint 화면 출력 강제 미흡, reporter @rohwonseok-ops). 코드베이스 file:line 실측 검증 기반(외부 dogfooder 주장 무검증 수용 금지 원칙).
