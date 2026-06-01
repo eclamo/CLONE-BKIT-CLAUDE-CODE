@@ -29,15 +29,17 @@ metadata:
 4. 해당 sprint 작업 (`/sprint start <id>` 또는 phase 진행) — **위 품질 지침 준수**
 5. **종료 시 반드시**: sprint state 갱신 + 본 파일 "진행 현황" 표 갱신 + master-plan JSON sprints[].status 갱신
 
-## Sprint 의존성 (Kahn order)
+## Sprint 의존성 (Kahn order) — S6 추가 2026-06-01
 ```
 S1 (독립) ─┐
 S2 (독립) ─┤
+S6 (독립) ─┤  ← 신규 P0 (CC Stop hook schema 위반, 활성 breakage)
 S4 (독립) ─┼─→ S3a(S4) ─→ S3b(S3a) ─┐
-          └──────────────────────────┴─→ S5 (S1+S2+S3b+S4) [LAST]
+          └──────────────────────────┴─→ S5 (S1+S2+S6+S3b+S4) [LAST]
 ```
-Task 매핑(세션 2 재생성, 2026-06-01): S1=#1 / S2=#2 / S4=#3 / S3a=#4 / S3b=#5 / S5=#6
-- 의존: #4 blockedBy #3 / #5 blockedBy #4 / #6 blockedBy #1,#2,#5,#3
+Kahn 실행 순서: **S1→S2→S6→S4→S3a→S3b→S5** (S6는 활성 P0라 S4보다 우선).
+Task 매핑(세션 2, 2026-06-01): S1=#1 / S2=#2 / S4=#3 / S3a=#4 / S3b=#5 / S5=#6 / **S6=#7**
+- 의존: #4 blockedBy #3 / #5 blockedBy #4 / #6(S5) blockedBy #1,#2,#7,#5,#3
 - ⚠️ Task Management 는 세션 휘발성 → 세션마다 본 매핑 재생성 가능. master-plan state JSON 의 dependencyGraph 가 기계 판독 SoT.
 
 ## 진행 현황 (세션마다 갱신)
@@ -45,12 +47,14 @@ Task 매핑(세션 2 재생성, 2026-06-01): S1=#1 / S2=#2 / S4=#3 / S3a=#4 / S3
 |--------|------|------|-------|------|------|
 | S1 CC v2.1.159 Response | #1 | — | L4 | ✅ archived (2026-06-01) | ENH-324~328 완료, QA 3/3 PASS, registry 22→24, report 작성 |
 | S2 Cross-Platform | #2 | — | L4 | ✅ archived (2026-06-01 세션2) | ENH-329~335 완료. CRLF fence 정규식 6 + split 34/19파일 + path-sep 2. 런타임 QA 8/8, 회귀 0. 8-phase 완주, 11 gate green. report 작성 |
-| S4 Tech-Debt/Dead-Code | #3 | — | L3 | 🟢 NEXT (unblocked) | pdca-eval stub 6, skip테스트 19파일 |
+| S6 CC Stop Hook Schema | #7 | — | L4 | 🟢 NEXT (unblocked, P0 활성) | 5 Stop emitter `decision:'allow'`+Stop hookSpecificOutput+skillResult → CC reject. root=cc-payload.port.js:26 잘못된 decision 타입. 분석 docs/03-analysis/features/cc-stop-hook-schema-compliance.analysis.md |
+| S4 Tech-Debt/Dead-Code | #3 | — | L3 | ⬜ planned (S6 다음) | pdca-eval stub 6, skip테스트 19파일 |
 | S3a God-File Split | #4 | S4 | L2 | 🔒 blocked | 7 god-files ~5899 LOC 분할 |
 | S3b Layer Consolidation | #5 | S3a | L2 | 🔒 blocked | 22 subdirs/8-layer 통합 |
 | S5 Final QA+i18n+Docs-Sync | #6 | S1,S2,S3b,S4 | L3 | 🔒 blocked | 전체 QA(L1-L5+S1) + 8-lang trigger(44skill+40agent) + code=docs(README/hooks/bkit.config.json/.claude-plugin/bkit-system/CHANGELOG/AI-NATIVE/CUSTOMIZATION/README-FULL, docs/ 제외) |
 
-**현재 위치**: S1 ✅, S2 ✅ archived (세션2, 2026-06-01). **다음: S4 tech-debt-deadcode-elimination** (unblocked). `/sprint init tech-debt-deadcode-elimination --trust L4` 후 동일 /pdca 8-phase. S4 완료 시 S3a unblock.
+**현재 위치**: S1 ✅, S2 ✅ archived (세션2, 2026-06-01). **다음: S6 cc-stop-hook-schema-compliance** (신규 P0, 2026-06-01 활성 — S4보다 우선). `/sprint init cc-stop-hook-schema-compliance --trust L4` 후 동일 /pdca 8-phase. S6 다음 S4 → S3a → S3b → S5.
+**S6 편입 경위**: S2 완료 후 사용자가 `/sprint list` 실행 시 Stop hook 출력 검증 에러(`(root): Invalid input`) 발생 → 심층 분석 결과 5 Stop emitter 공통 systemic 버그(잘못된 decision enum + Stop 미지원 hookSpecificOutput + skillResult root field) 확인 → master plan에 S6로 정식 편입(2026-06-01). enhReserved ENH-324~366으로 확장, releaseGate 7/7.
 **S2 핵심 교훈**: 마스터플랜 worst-case 추정(raw concat 14/shell 분기 확대/21 hook)은 과대 — bkit 이미 ~90% cross-platform-safe. 진짜 위험은 **CRLF 미처리 frontmatter fence 정규식**(`/^---\n/`이 `---\r\n`에서 매칭 실패→skill 로딩 깨짐). S4/S5도 추정 맹신 말고 실측 우선. ⚠️ Windows 실런타임 검증은 미수행(Darwin) → 후속 ENH(CI matrix) carry.
 **Gate 측정 방식 메모**: sprint-handler CLI는 Task tool 없어 measure가 `no_agent_runner` 반환 → 메인 세션이 dispatcher로서 실측 증거 기반 gate 값을 state qualityGates에 직접 기록 후 `phase --to <p> --approve` 로 전진. M5_runtimeErrorRate 슬롯은 init state에 없어 수동 추가 필요. `--approve`는 scope만 우회, gate fail은 우회 못 함(측정 먼저).
 
