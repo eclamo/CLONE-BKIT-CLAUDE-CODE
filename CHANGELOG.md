@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [2.1.22] - Unreleased (branch: `release/v2.1.22-hardening`)
+## [2.1.22] - 2026-06-02 (branch: `release/v2.1.22-hardening`)
 
 > **Status**: Hardening Release (진행 중) — 6-sprint master plan (`docs/01-plan/features/v2.1.22-hardening.master-plan.md`). 신규 사용자 대면 기능 없음, 품질 경화/정합성 전용. Kahn order S1→S2→S4→S3a→S3b→S5.
 
