@@ -182,7 +182,7 @@ export CLAUDE_CODE_EXPERIMENTAL_AGENT_TEAMS=1
 /sprint start my-release-s1
 ```
 
-Recommended Claude Code runtime: **v2.1.123+** (conservative) or **v2.1.139** (balanced, 94 consecutive compatible). Minimum **v2.1.78**.
+Recommended Claude Code runtime: **v2.1.150** (conservative, stable) or **v2.1.159** (balanced, 112 consecutive compatible). Minimum **v2.1.78**.
 
 ## Quality gates — the safety net explained
 
@@ -198,7 +198,7 @@ Full M1–M10 + S1 catalog in [README-FULL.md §5](README-FULL.md#5-quality-gate
 
 ## Architecture at a glance
 
-44 skills · 34 agents · 21 hook events / 24 blocks · 2 MCP servers (19 tools) · 163 lib modules across 19 subdirs · 51 scripts · 39 templates · 118+ test files / 4,000+ test cases. Clean Architecture 4-Layer · Defense-in-Depth 4-Layer · Invocation Contract L1–L5 (226 CI-gated assertions).
+44 skills · 34 agents · 21 hook events / 24 blocks · 2 MCP servers (19 tools) · 190 lib modules across 22 subdirs · 61 scripts · 40 templates · 118+ test files / 4,000+ test cases. Clean Architecture 4-Layer · Defense-in-Depth 4-Layer · Invocation Contract L1–L5 (226 CI-gated assertions).
 
 Full architecture deep-dive: [README-FULL.md §9](README-FULL.md#9-architecture).
 
