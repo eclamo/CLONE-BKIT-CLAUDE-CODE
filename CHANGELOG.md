@@ -30,6 +30,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **검증**: CRLF 런타임 QA **8/8 PASS**(frontmatter 파서 3종 × CRLF/LF), 회귀 **0**(변경 전/후 test 수트 `comm` 비교 — 7 pre-existing fail 전후 동일), `verify-full-system` module 188/188·hook syntax 69/69·agent 40/40·hooks.json 25/25 PASS. 회귀 불변식: `\n`→`\r?\n`·`'\n'`→`/\r?\n/`는 LF 입력 byte-identical(mac/linux 무회귀).
 - **한계/Carry (ENH-335)**: 현 환경 Darwin → Windows **실런타임 발화 검증은 미수행**(정적분석+정합성+CRLF 무회귀까지). 실제 Windows/PS/WSL 검증은 **후속 ENH(CI matrix)** 로 분리. scripts/ 잔존 `split('\n')`(dev/CI 도구, 저위험)은 후속 일관성 정리 carry.
 
+### S6 — CC Stop Hook Output Schema Compliance (ENH-361~366)
+
+> 활성 편입(2026-06-01): S2 완료 후 사용자 `/sprint list` 실행 중 `Stop hook error: Hook JSON output validation failed — (root): Invalid input` 발생 → 심층 분석으로 5 Stop emitter 공통 systemic 결함 확인 → 신규 P0 sprint. 산출물: `docs/03-analysis/features/cc-stop-hook-schema-compliance.analysis.md` · `docs/01-plan|02-design|04-report/features/cc-stop-hook-schema-compliance.*`. Kahn 재배치 S1→S2→**S6**→S4→S3a→S3b→S5.
+
+- **근본 원인(RC0)**: `lib/domain/ports/cc-payload.port.js`가 `decision`을 `'allow'|'deny'|'ask'|'defer'`(=permissionDecision 값)로 **잘못 타입 정의** → 5 emitter가 `decision:'allow'`(CC Stop은 `approve|block`만) + Stop 미지원 `hookSpecificOutput`(additionalContext/sessionTitle/userPrompt) + 스키마 밖 root 필드(`skillResult`/`autoTrigger`/`iterationResult`/`analysisResult`) 출력. CC가 plugin manifest 스키마 강화(ADR 0011)와 **동일 클래스**로 hook 출력 검증을 강화하며 reject.
+- **ENH-361**: `cc-payload.port.js` HookOutput typedef 정정 — `decision:'approve'|'block'`(Stop) ↔ `permissionDecision:'allow'|'deny'|'ask'`(PreToolUse) 분리 + 계약 JSDoc.
+- **ENH-364**: `lib/core/io.js`에 `outputStopSurface(reason)`(=`{decision:'block',reason}`, Claude가 요약+next-step 렌더 강제 — #113 의도 보존) / `outputStopAllow()`(=`{}`, clean stop) 단일 SoT 헬퍼 신설.
+- **ENH-362/363**: 5 emitter(`sprint-skill-stop`·`pdca-skill-stop`·`plan-plus-stop`·`iterator-stop`·`gap-detector-stop`) compliant 전환 — `decision:'allow'`·`hookSpecificOutput`·비스키마 root 필드 제거, executive summary→`reason`, AskUserQuestion options→`reason` 텍스트 직렬화, 구조화 데이터→`debugLog`. 미사용 import 정리.
+- **ENH-365**: `tests/contract/v2122-stop-hook-output-schema.test.js`(신규) — 5 emitter 출력 CC Stop 스키마 contract 가드(재발 차단). `test/unit/sprint-skill-stop.test.js` 정정(옛 버그 shape→compliant, 20/20).
+- **ENH-366**: `lib/cc-regression/registry.js`에 `MON-CC-NEW-STOP-SCHEMA-STRICT`(HIGH) 등록(R3-321 계보, bkit S6로 resolved).
+- **검증**: 런타임 스키마 QA **31/31**(5 emitter × 키집합/decision enum/금지필드), unit e2e **20/20**(unified-stop dispatch + marker consume 포함), 회귀 **0**(전후 `comm`), contract test exit 0. 대표: `gap-detector-stop` → `{"decision":"block","reason":...}`(이전 reject), read-only sprint → `{}`.
+- **한계/Carry**: sessionTitle on Stop 상실(CC 미지원) → SessionStart로 일원화(#111 per-Stop title 갱신 상실, 영향 LOW). CC strict-validation 도입 버전 미상(v2.1.159 confirmed, reconcile pin TODO).
+
 ## [2.1.21] - 2026-05-29 (branch: `release/v2.1.21-issue-response`)
 
 > **Status**: Issue Response Sprint — 2건의 외부 dogfooder open issue를 단일 통합 sprint(`v2121-issue-response`, Trust L4)으로 해소. **#111** (sessionTitle 충돌, reporter @wonuseo 외부 dogfooder #3) + **#113** (Sprint 화면 출력 강제 미흡, reporter @rohwonseok-ops). 코드베이스 file:line 실측 검증 기반(외부 dogfooder 주장 무검증 수용 금지 원칙).
