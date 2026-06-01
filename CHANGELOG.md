@@ -43,6 +43,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **검증**: 런타임 스키마 QA **31/31**(5 emitter × 키집합/decision enum/금지필드), unit e2e **20/20**(unified-stop dispatch + marker consume 포함), 회귀 **0**(전후 `comm`), contract test exit 0. 대표: `gap-detector-stop` → `{"decision":"block","reason":...}`(이전 reject), read-only sprint → `{}`.
 - **한계/Carry**: sessionTitle on Stop 상실(CC 미지원) → SessionStart로 일원화(#111 per-Stop title 갱신 상실, 영향 LOW). CC strict-validation 도입 버전 미상(v2.1.159 confirmed, reconcile pin TODO).
 
+### S4 — Tech-Debt & Dead-Code Elimination (ENH-336~342)
+
+> 입력 근거: 마스터 플랜 §10 S4 + 본 sprint 전수 실측. 산출물: `docs/01-plan|02-design|04-report/features/tech-debt-deadcode-elimination.*`. **실측 교정**: 추정(pdca-eval 6 stub / test skip 19~491 / TODO 5 / dead module / orphan script)은 전부 raw-match 과대집계 — **제거할 dead code 0건**. 모든 후보가 live(계약 요구/CI 호출/test 의존/CLI 진입점/문서화 도구).
+
+- **ENH-336 (거버넌스 결정 — 핵심)**: `pdca-eval-{act,check,design,do,plan,pm}` 6 deprecated stub **영구 유지 확정**. 근거: (1) v2.1.9 + v2.1.16 immutable contract baseline 모두 6 등재, (2) `contract-test-run.js runL4Deprecation()`이 baselined agent 부재 시 `deprecatedIn` stub 없으면 `L4 FAIL`, (3) stub은 `deprecatedIn:v2.1.13` 보유 → 현재 L4 PASS. 제거하려면 역사 immutable baseline 2개 훼손 + `Active+Deprecated===agents+6` 불변식 파괴 → 금지. **구현**: `lib/domain/rules/docs-code-invariants.js` `EXPECTED_DEPRECATED_AGENT_NAMES`에 거버넌스 lock 주석 추가(향후 오삭제 방지, 값/export 불변).
+- **ENH-337 (test skip triage)**: 실제 비활성 테스트 **0** — `\b(it|describe|test|context|suite)\.skip\b`/`.only`/`xit(` 모두 0(412는 `process.exit(` substring 오매칭). 커스텀 `skip(id,msg)` 헬퍼는 legitimate 조건부 skip 인프라. 제거 없음.
+- **ENH-338 (TODO triage)**: lib/scripts/hooks 전체 TODO **1건**(S6서 추가한 의도적 reconcile-pin forward-TODO). 유지.
+- **ENH-339 (dead lib module)**: `scripts/check-deadcode.js` → **Dead(NEW)=0** (188 모듈: 141 live / 47 exempt[type-only port·facade·dynamic load] / 0 legacy debt). 제거 없음.
+- **ENH-340 (orphan script / stale state)**: 미참조 후보 7개 전수 검증 → 전부 live(`check-deadcode`/`check-guards`/`check-test-tracking`=`.github/workflows/contract-check.yml` CI, `verify-full-system`=full-system verifier CLI, `audit-output-styles`/`sprint-memory-writer`=docs+CLI, `sync-folders`=`tests/qa/v2112-deep-qa-fixes.test.js` test 의존+bkit-system 카탈로그). 진짜 orphan **0**. `.bkit/state`는 gitignored 로컬 전용(릴리스 무관).
+- **ENH-341 (removal manifest)**: **총 안전 제거 0건** + 후보별 live 근거(safety justification) 문서화(design §2).
+- **검증**: L4 deprecation governance PASS(v2.1.9+v2.1.16 exit 0), check-deadcode Dead=0, `Active(34)+Deprecated(6)===agents(34)+6` 불변식 true, 회귀 **0**(전후 `comm`, 7 pre-existing 동일). 코드 변경은 거버넌스 주석 1건뿐(M4=100).
+
 ## [2.1.21] - 2026-05-29 (branch: `release/v2.1.21-issue-response`)
 
 > **Status**: Issue Response Sprint — 2건의 외부 dogfooder open issue를 단일 통합 sprint(`v2121-issue-response`, Trust L4)으로 해소. **#111** (sessionTitle 충돌, reporter @wonuseo 외부 dogfooder #3) + **#113** (Sprint 화면 출력 강제 미흡, reporter @rohwonseok-ops). 코드베이스 file:line 실측 검증 기반(외부 dogfooder 주장 무검증 수용 금지 원칙).
