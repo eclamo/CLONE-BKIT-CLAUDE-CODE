@@ -67,6 +67,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **ENH-348 simplicity invariant 최종 검증**: god-file **0**, 최대 파일 **541**(≤700), lib subdir **22**(무증가), lib module **190**(+2, ≤+10), contract assertion **255/234**(불변), 전 gate green.
 - **검증**: dispatcher 실동작(help/list/status/measure/trust idempotent-noop), sprint-handler 전용 test 6/6 + state-machine 4/4 PASS, contract L1+L4 255/234 PASS(전 분할), check-deadcode Dead=0, verify-full-system module 190/190·hook 73/73·agent 40/40·hooks.json 25/25, 회귀 **0**(4분할 각 baseline 7 동일).
 
+### S3b — Context-Eng Simplification: Layer/Pipeline Consolidation (ENH-349~354)
+
+> 입력 근거: 마스터 플랜 §8 simplicity invariant + §10 S3b. 산출물: `docs/01-plan|02-design|04-report/features/ctx-eng-layer-consolidation.*` + **ADR `docs/adr/0013-context-engineering-factoring.md`**. **코드 변경 0건** — 전수 코드 검증 결과 통합할 actionable redundancy 없음(S2/S4와 동일한 "추정 ≠ 실측"). S3b 단순화 성과는 S3a god-file 4→0으로 이미 실현.
+
+- **ENH-349~352 (통합 검증)**: 모든 통합 후보가 비-redundant로 판명 → 통합 0건. (a) lib subdir 22≤22 충족, 단일모듈 subdir은 distinct feature+skill/MCP 진입점(lib/sprint 38 importers). (b) "8-layer context engineering"은 `AI-NATIVE §205-212`의 **개념적 capability map**(L1 Skills~L8 Sprint), 코드 아님 → 병합=capability 제거(Anti-Mission 위반). (c) 8 Port(audit-sink/caching-cost/cc-payload/docs-code-index/mcp-tool/regression-registry/state-store/token-meter) 전부 distinct DDD 계약. (d) frontmatter 파싱은 `lib/util/frontmatter.js`(v2.1.18 CO-5)+`markdown-parse.js`(v2.1.19 S3)에서 **이미 통합**(docs-code-scanner+5 baseline 소비처 실제 require). (e) 동일 basename(executive-summary/transitions/phases)은 pdca∥sprint **의도적 병렬 도메인**.
+- **ENH-353 (ADR 0013)**: Context Engineering 구조가 의도적 factoring임을 영구 기록 — 비통합 사유(capability 보존 + churn>benefit + 255 assertion 위험) + 향후 통합 트리거 조건(동일목적 2+ 독립구현 분기 시에만). 향후 "구조 카운트 기반" 통합 충동 차단.
+- **ENH-354 (simplicity invariant 검증)**: god-file **0**, 최대 파일 **693**, lib subdir **22**, lib module **190(+2)**, layer **8(개념 보존)**, contract **255/234 불변**, 전 gate green — 전부 충족.
+- **검증**: contract L1+L4 255/234 PASS, check-deadcode Dead=0, 회귀 **0**(코드 무변경, baseline 7 동일), 코드 파일 변경 0(docs/ADR만, M4=100).
+
 ## [2.1.21] - 2026-05-29 (branch: `release/v2.1.21-issue-response`)
 
 > **Status**: Issue Response Sprint — 2건의 외부 dogfooder open issue를 단일 통합 sprint(`v2121-issue-response`, Trust L4)으로 해소. **#111** (sessionTitle 충돌, reporter @wonuseo 외부 dogfooder #3) + **#113** (Sprint 화면 출력 강제 미흡, reporter @rohwonseok-ops). 코드베이스 file:line 실측 검증 기반(외부 dogfooder 주장 무검증 수용 금지 원칙).
